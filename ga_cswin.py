@@ -648,7 +648,7 @@ class GA_CSWinTransformer(nn.Module):
                 else:
                     x = blk(x)
                 b_index = b_index + 1
-                if (l_index == 1) and ((b_index+1) % (len(blocks)//(self.stage3_naggre+1)) == 0 and len(xs) < (self.stage3_naggre + 2)):
+                if (l_index == 1) and (b_index % (len(blocks)//(self.stage3_naggre+1)) == 0 and len(xs) < (self.stage3_naggre + 2)):
                     B, N, C = x.shape
                     xs.append(x.transpose(-2, -1).reshape(B, C, int(N ** 0.5), int(N ** 0.5)))
             B, N, C = x.shape
