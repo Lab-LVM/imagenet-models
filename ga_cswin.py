@@ -142,7 +142,7 @@ class CSWinBlock(nn.Module):
                  split_size=7, mlp_ratio=4., qkv_bias=False, qk_scale=None,
                  drop=0., attn_drop=0., drop_path=0.,
                  act_layer=nn.GELU, norm_layer=nn.LayerNorm,
-                 last_stage=False):
+                 last_stage=False, mlp_groups=1):
         super().__init__()
         self.dim = dim
         self.num_heads = num_heads
@@ -179,8 +179,13 @@ class CSWinBlock(nn.Module):
         mlp_hidden_dim = int(dim * mlp_ratio)
 
         self.drop_path = DropPath(drop_path) if drop_path > 0. else nn.Identity()
-        self.mlp = Mlp(in_features=dim, hidden_features=mlp_hidden_dim, out_features=dim, act_layer=act_layer,
-                       drop=drop)
+        if mlp_groups == 1:
+            self.mlp = Mlp(in_features=dim, hidden_features=mlp_hidden_dim, out_features=dim, act_layer=act_layer,
+                           drop=drop)
+        else:
+            self.mlp = GroupConvMlp(in_features=dim, hidden_features=mlp_hidden_dim, act_layer=act_layer,
+                                    out_features=dim, drop=drop, groups=mlp_groups)
+
         self.norm2 = norm_layer(dim)
 
     def forward(self, x):
@@ -444,8 +449,8 @@ class GA_CSWinTransformer(nn.Module):
     """
     def __init__(self, img_size=224, patch_size=16, in_chans=3, num_classes=1000, embed_dim=64, depth=[2, 2, 6, 2],
                  split_size=[3, 5, 7], num_heads=12, mlp_ratio=4., mlp_ratio_stage4=4., mlp_ratio_stage5=4., qkv_bias=True, qk_scale=None, drop_rate=0., attn_drop_rate=0.,
-                 drop_path_rate=0., norm_layer=nn.LayerNorm, use_chk=False, dims=[64, 128, 256, 512], stage3_naggre=4, ga_mlp_groups=4,
-                 branches=5, gram_dim=192, deep_stem=False, stage5='CSwin'):
+                 drop_path_rate=0., norm_layer=nn.LayerNorm, use_chk=False, dims=[64, 128, 256, 512], stage3_naggre=4, ga_mlp_groups=2, ga_layer_mlp_groups=1,
+                 branches=5, gram_dim=192, deep_stem=True, stage5='CSWin', stage5_mlp_groups=1, ga_layer=True):
         super().__init__()
         self.use_chk = use_chk
         self.num_classes = num_classes
@@ -523,14 +528,14 @@ class GA_CSWinTransformer(nn.Module):
         aggre_dim = sum(dims) + dims[2] * stage3_naggre
 
         self.merge4 = None
-        if stage5 == 'CSwin':
+        if stage5 == 'CSWin':
             self.stage5 = nn.Sequential(
                 Rearrange(' b c h w -> b (h w) c', h=img_size // 16, w=img_size // 16),
                 Merge_Block_LCF(aggre_dim, curr_dim), CSWinBlock(
                 dim=curr_dim, num_heads=heads[4], reso=img_size // 16, mlp_ratio=mlp_ratio_stage5,
                 qkv_bias=qkv_bias, qk_scale=qk_scale, split_size=split_size[4],
                 drop=drop_rate, attn_drop=attn_drop_rate,
-                drop_path=dpr[-1], norm_layer=norm_layer),
+                drop_path=dpr[-1], norm_layer=norm_layer, mlp_groups=stage5_mlp_groups),
                 Rearrange('b (h w) c -> b c h w', h=img_size // 16, w=img_size // 16))
         elif stage5 == 'bottleneck':
             self.stage5 = Bottleneck(inplanes=aggre_dim, planes=curr_dim // 4, outplanes=curr_dim,
@@ -555,17 +560,20 @@ class GA_CSWinTransformer(nn.Module):
                               padding=0, bias=True, groups=8),
                     nn.BatchNorm2d(gram_dim)))
 
-            self.gram_layer.append(
-                nn.Sequential(
-                    Rearrange(' b c h w -> b (h w) c', h=img_size // 16, w=img_size // 16),
-                CSWinBlock(
-                    dim=gram_dim, num_heads=6, reso=img_size // 16, mlp_ratio=mlp_ratio,
-                    qkv_bias=qkv_bias, qk_scale=qk_scale, split_size=split_size[4],
-                    drop=drop_rate, attn_drop=attn_drop_rate,
-                    drop_path=dpr[-1], norm_layer=norm_layer),
-                    Rearrange('b (h w) c -> b c h w', h=img_size // 16, w=img_size // 16),
+            if ga_layer:
+                self.gram_layer.append(
+                    nn.Sequential(
+                        Rearrange(' b c h w -> b (h w) c', h=img_size // 16, w=img_size // 16),
+                    CSWinBlock(
+                        dim=gram_dim, num_heads=6, reso=img_size // 16,
+                        qkv_bias=qkv_bias, qk_scale=qk_scale, split_size=split_size[4],
+                        drop=drop_rate, attn_drop=attn_drop_rate,
+                        drop_path=dpr[-1], norm_layer=norm_layer, mlp_groups=ga_layer_mlp_groups),
+                        Rearrange('b (h w) c -> b c h w', h=img_size // 16, w=img_size // 16),
+                    )
                 )
-            )
+            else:
+                self.gram_layer.append(nn.Identity())
 
             self.gram_embedding.append(nn.Sequential(
                 nn.Conv2d(((gram_dim + 1) * gram_dim // 2),
@@ -703,6 +711,4 @@ def _conv_filter(state_dict, patch_size=16):
             v = v.reshape((v.shape[0], 3, patch_size, patch_size))
         out_dict[k] = v
     return out_dict
-
-def _create_cswin(variant, pretrained=False, **kwargs):
-    return build_model_with_cfg(GA_CSWinTransformer, variant, pretrained, **kwargs)
+    
