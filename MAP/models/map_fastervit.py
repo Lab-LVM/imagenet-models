@@ -1075,7 +1075,7 @@ def map_faster_vit_3_224(pretrained=False, **kwargs):
     model.default_cfg = model.pretrained_cfg
     if pretrained:
         checkpoint = 'https://github.com/Lab-LVM/imagenet-models/releases/download/v0.0.1/map_faster_vit_3_224.pth.tar'
-        state_dict = torch.hub.load_state_dict_from_url(checkpoint, progress=False)
+        state_dict = torch.hub.load_state_dict_from_url(checkpoint, progress=False, map_location='cpu')
         state_dict = state_dict['state_dict'] if 'state_dict' in state_dict else state_dict
         model.load_state_dict(state_dict)
     return model

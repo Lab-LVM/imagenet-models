@@ -452,7 +452,7 @@ def map_resnet50(pretrained=False, **kwargs):
 
     if pretrained:
         checkpoint = 'https://github.com/Lab-LVM/imagenet-models/releases/download/v0.0.1/map_resnet50.pth.tar'
-        state_dict = torch.hub.load_state_dict_from_url(checkpoint, progress=False)
+        state_dict = torch.hub.load_state_dict_from_url(checkpoint, progress=False, map_location='cpu')
         state_dict = state_dict['state_dict'] if 'state_dict' in state_dict else state_dict
         model.load_state_dict(state_dict)
 

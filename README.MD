@@ -6,13 +6,13 @@ This repository contains the official PyTorch implementation of our research pap
 
 ## Paper List
 
-We provide an paper list and its project folder in this GitHub repository.
+We provide an paper list and their project folders in this GitHub repository.
 
 | Year | Venue | Title                                                        | Paper                                                        | Project    |
 | ---- | ----- | ------------------------------------------------------------ | ------------------------------------------------------------ | ---------- |
 | 2023 | ICCV  | Gramian Attention Heads are Strong yet Efficient Vision Learners | [PDF](https://openaccess.thecvf.com/content/ICCV2023/papers/Ryu_Gramian_Attention_Heads_are_Strong_yet_Efficient_Vision_Learners_ICCV_2023_paper.pdf) | [GA](GA)   |
 | 2025 | WACV  | Enriching Local Patterns with Multi-Token Attention for Broad-Sight Neural Networks | TBD                                                          | [MAP](MAP) |
-| 2025 | WACV  |                                                              | TBD                                                          |            |
+|      |       |                                                              |                                                              |            |
 
 
 
