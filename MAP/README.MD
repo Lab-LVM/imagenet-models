@@ -11,23 +11,27 @@ Broad-Sight Neural Networks"* accepted in WACV'25. (see our [paper]()).
   <h4 align="center">Illustration of Multi-Token Attention Pooling Framework</h4>
 </p>
 
-
 ## 1. Requirement
 
 Please install PyTorch (>=1.11.0), TorchVision (>=0.12.0), and TIMM (==0.9.2) library.
 
-
-
 ## 2. How to use Pre-trained Network with MAP?
 
-**Usage.** You can download the code of [map_convnext.py](models/map_convnext.py), [map_maxvit.py](models/map_maxvit.py), [map_pit.py](models/map_pit.py), [map_resnet.py](models/map_resnet.py), and [map_mobilenet.py](models/map_mobilenet.py). By importing saved python file, you can use pre-trained network to predict images. You can choose model name from `map_mobilenet_v1`, `map_resnet50`, `map_pit_s`, `map_convnext_tiny`, `map_convnext_small`, `map_maxvit_tiny_tf_224`, and `map_faster_vit_3_224`. Here, we provide a simple code snippet to inference tench image using ConvNeXt-T trained with our MAP method.
-
-
+**Usage.** You can download the code
+of [map_convnext.py](models/map_convnext.py), [map_maxvit.py](models/map_maxvit.py), [map_pit.py](models/map_pit.py), [map_resnet.py](models/map_resnet.py),
+and [map_mobilenet.py](models/map_mobilenet.py). By importing saved python file, you can use pre-trained network to
+predict images. You can choose model name
+from `map_mobilenet_v1`, `map_resnet50`, `map_pit_s`, `map_convnext_tiny`, `map_convnext_small`, `map_maxvit_tiny_tf_224`,
+and `map_faster_vit_3_224`. Here, we provide a simple code snippet to inference tench image using ConvNeXt-T trained
+with our MAP method.
 
 ```python
-!wget - nc https://raw.githubusercontent.com/Lab-LVM/imagenet-models/main/MAP/models/map.py
-!wget - nc https://raw.githubusercontent.com/Lab-LVM/imagenet-models/main/MAP/models/map_convnext.py
-!wget - nc https://raw.githubusercontent.com/EliSchwartz/imagenet-sample-images/refs/heads/master/n01440764_tench.JPEG
+!wget - nc
+https: // raw.githubusercontent.com / Lab - LVM / imagenet - models / main / MAP / models / map.py
+!wget - nc
+https: // raw.githubusercontent.com / Lab - LVM / imagenet - models / main / MAP / models / map_convnext.py
+!wget - nc
+https: // raw.githubusercontent.com / EliSchwartz / imagenet - sample - images / refs / heads / master / n01440764_tench.JPEG
 
 from map_convnext import *
 from PIL import Image
@@ -60,10 +64,6 @@ for branch in range(2):
 ##########################################
 ```
 
-
-
-
-
 **Checkpoint.** We provide checkpoints of various backbone network with the proposed MAP layer.
 
 | Network       | Speed (img/sec) | Param (M) | FLOPs (G) | Top-1 Acc. (%) | Δ    | Link                                                                                                                                      |
@@ -83,11 +83,12 @@ for branch in range(2):
 | FasterViT-3** | 1087            | 159.5     | 18.5      | 83.1           |      |                                                                                                                                           |
 | +MAP (Ours)   | 970             | 187.0     | 18.8      | 84.2           | +1.1 | [ckpt](https://github.com/Lab-LVM/imagenet-models/releases/download/v0.0.1/map_faster_vit_3_224.pth.tar), [code](models/map_fastervit.py) |
 
-In this table, we evaluate the top-1 accuracy (%) on the ImageNet-1K dataset with 300 epochs. We measure the speed of networks on the RTX 3090 GPU. *: we include SE unit and deep stem in backbone to improve the performance during rebuttal phase. **: we reproduce baseline results without self-distillation method.
+In this table, we evaluate the top-1 accuracy (%) on the ImageNet-1K dataset with 300 epochs. We measure the speed of
+networks on the RTX 3090 GPU. *: we include SE unit and deep stem in backbone to improve the performance during rebuttal
+phase. **: we reproduce baseline results without self-distillation method.
 
-
-
-**Command Line.** We provide bash command line to train/validate different backbone network with the proposed MAP layer. Moreover, we denote training time and evaluation results when running each command.
+**Command Line.** We provide bash command line to train/validate different backbone network with the proposed MAP layer.
+Moreover, we denote training time and evaluation results when running each command.
 
 
 
@@ -102,12 +103,10 @@ In this table, we evaluate the top-1 accuracy (%) on the ImageNet-1K dataset wit
 CUDA_VISIBLE_DEVICES=0,1, torchrun --nproc_per_node=2 --master_port=12345 train_with_script.py mobilenet_v1 -c 0,1 -m map_mobilenet_v1
 ```
 
-
-
 **Validation Command Line.** Running this command line will result in: *Acc@1 73.430 (26.570) Acc@5 91.364 (8.636)*
 
 ```bash
-hankyul@hankyul:~$ CUDA_VISIBLE_DEVICES=0, python validate.py imageNet --model map_mobilenet_v1 --checkpoint ../output/result/map_mobilenet_v1.pth.tar --crop-pct 0.95
+hankyul@hankyul:~$ CUDA_VISIBLE_DEVICES=0, python validate.py imageNet --model map_mobilenet_v1 --pretrained --crop-pct 0.95
 
 Validating in mixed precision with native PyTorch AMP.
 Loaded state_dict from checkpoint '../output/result/map_mobilenet_v1.pth.tar'
@@ -169,12 +168,10 @@ Test: [ 190/196]  Time: 0.031s (0.361s,  708.47/s)  Loss:  1.2754 (1.0837)  Acc@
 CUDA_VISIBLE_DEVICES=0,1, torchrun --nproc_per_node=2 --master_port=12345 train_with_script.py resnet50 -c 0,1 -m map_resnet50
 ```
 
-
-
 **Validation Command Line.** Running this command line will result in: *Acc@1 82.850 (17.150) Acc@5 95.946 (4.054)*
 
 ```bash
-hankyul@hankyul:~$ CUDA_VISIBLE_DEVICES=0, python validate.py imageNet --model map_resnet50 --checkpoint ../output/result/map_resnet50.pth.tar --crop-pct 0.95
+hankyul@hankyul:~$ CUDA_VISIBLE_DEVICES=0, python validate.py imageNet --model map_resnet50 --pretrained --crop-pct 0.95
 
 Validating in mixed precision with native PyTorch AMP.
 Loaded state_dict from checkpoint '../output/result/map_resnet50.pth.tar'
@@ -238,18 +235,17 @@ Test: [ 190/196]  Time: 0.141s (0.370s,  691.18/s)  Loss:  0.9922 (0.7462)  Acc@
 CUDA_VISIBLE_DEVICES=0,1, torchrun --nproc_per_node=2 --master_port=12345 train_with_script.py pit_s -c 0,1 -m map_pit_s
 ```
 
-
-
 **Validation Command Line.** Running this command line will result in: *Acc@1 81.888 (18.112) Acc@5 95.810 (4.190)*
 
 ```bash
-hankyul@hankyul:~$ CUDA_VISIBLE_DEVICES=0, python validate.py imageNet --model map_pit_s --checkpoint ../output/result/map_pit_s.pth.tar --crop-pct 0.95
+hankyul@hankyul:~$ CUDA_VISIBLE_DEVICES=0, python validate.py imageNet --model map_pit_s --pretrained --crop-pct 0.95
 
 Validating in mixed precision with native PyTorch AMP.
 Loaded state_dict from checkpoint '../output/result/map_pit_s.pth.tar'
 Model map_pit_s created, param count: 36147424
 Data processing configuration for current model + dataset:
-        input_size: (3, 224, 224)                                                                           		interpolation: bicubic
+        input_size: (3, 224, 224)                                                                 
+        interpolation: bicubic
         mean: (0.485, 0.456, 0.406)
         std: (0.229, 0.224, 0.225)
         crop_pct: 0.95
@@ -304,14 +300,24 @@ Test: [ 190/196]  Time: 0.073s (0.360s,  711.28/s)  Loss:  1.0967 (0.9649)  Acc@
 CUDA_VISIBLE_DEVICES=0,1, torchrun --nproc_per_node=2 --master_port=12345 train_with_script.py convnext_tiny -c 0,1 -m map_convnext_tiny
 ```
 
-
-
-**Validation Command Line.** Running this command line will result in: *Acc@1 83.166 (16.834) Acc@5 96.272 (3.728)*. This result is slightly different than original table. This is because we save a checkpoint at the last epoch. We apologize for providing a checkpoint saved at the last epoch, not best epoch.
+**Validation Command Line.** Running this command line will result in: *Acc@1 83.166 (16.834) Acc@5 96.272 (3.728)*.
+This result is slightly different than original table. This is because we save a checkpoint at the last epoch. We
+apologize for providing a checkpoint saved at the last epoch, not best epoch.
 
 ```bash
-hankyul@hankyul:~$ CUDA_VISIBLE_DEVICES=0, python validate.py imageNet --model map_convnext_tiny --checkpoint ../output/result/map_convnext_tiny.pth.tar --crop-pct 0.875
+hankyul@hankyul:~$ CUDA_VISIBLE_DEVICES=0, python validate.py imageNet --model map_convnext_tiny --pretrained --crop-pct 0.875
 
-Validating in mixed precision with native PyTorch AMP.                                                       Loaded state_dict from checkpoint '../output/result/map_convnext_tiny.pth.tar'                               Model map_convnext_tiny created, param count: 47833760                                                       Data processing configuration for current model + dataset:                                                   		input_size: (3, 224, 224)                                                                                   interpolation: bicubic                                                                                       mean: (0.485, 0.456, 0.406)                                                                                 std: (0.229, 0.224, 0.225)                                                                                   crop_pct: 0.875                                                                                             crop_mode: center                                                                                    Test: [   0/196]  Time: 2.565s (2.565s,   99.81/s)  Loss:  0.4282 (0.4282)  Acc@1:  92.969 ( 92.969)  Acc@5:  98.047 ( 98.047)                                                             
+Validating in mixed precision with native PyTorch AMP.                                                       
+Loaded state_dict from checkpoint '../output/result/map_convnext_tiny.pth.tar'
+Model map_convnext_tiny created, param count: 47833760            
+Data processing configuration for current model + dataset:                                      
+        input_size: (3, 224, 224)                                                  
+        interpolation: bicubic                                                        
+        mean: (0.485, 0.456, 0.406)                                                            
+        std: (0.229, 0.224, 0.225)                                               
+        crop_pct: 0.875                                                             
+        crop_mode: center                                                         
+Test: [   0/196]  Time: 2.565s (2.565s,   99.81/s)  Loss:  0.4282 (0.4282)  Acc@1:  92.969 ( 92.969)  Acc@5:  98.047 ( 98.047)                                                             
 Test: [  10/196]  Time: 0.158s (0.544s,  470.83/s)  Loss:  0.7935 (0.5830)  Acc@1:  80.859 ( 87.500)  Acc@5:  96.875 ( 98.011)                                                             
 Test: [  20/196]  Time: 0.158s (0.474s,  540.13/s)  Loss:  0.4712 (0.5862)  Acc@1:  92.578 ( 87.370)  Acc@5:  97.656 ( 97.805)                                                             
 Test: [  30/196]  Time: 0.158s (0.422s,  607.18/s)  Loss:  0.6553 (0.5506)  Acc@1:  86.719 ( 88.521)  Acc@5:  97.266 ( 97.946)                                                             
@@ -361,17 +367,16 @@ Test: [ 190/196]  Time: 0.159s (0.377s,  678.77/s)  Loss:  1.1494 (0.7721)  Acc@
 CUDA_VISIBLE_DEVICES=0,1, torchrun --nproc_per_node=2 --master_port=12345 train_with_script.py convnext_small -c 0,1 -m map_convnext_small
 ```
 
-
-
 **Validation Command Line.** Running this command line will result in: *Acc@1 84.050 (15.950) Acc@5 96.668 (3.332)*
 
 ```bash
-hankyul@hankyul:~$ CUDA_VISIBLE_DEVICES=0, python validate.py imageNet --model map_convnext_small --checkpoint ../output/result/map_convnext_small.pth.tar --crop-pct 0.875
+hankyul@hankyul:~$ CUDA_VISIBLE_DEVICES=0, python validate.py imageNet --model map_convnext_small --pretrained --crop-pct 0.875
 
 Validating in mixed precision with native PyTorch AMP.
 Loaded state_dict from checkpoint '../output/result/map_convnext_small.pth.tar'
 Model map_convnext_small created, param count: 82837664
-Data processing configuration for current model + dataset:                                                   input_size: (3, 224, 224)
+Data processing configuration for current model + dataset:                                     
+        input_size: (3, 224, 224) 
         interpolation: bicubic
         mean: (0.485, 0.456, 0.406)
         std: (0.229, 0.224, 0.225)
@@ -427,12 +432,10 @@ Test: [ 190/196]  Time: 0.232s (0.378s,  677.29/s)  Loss:  1.0264 (0.7365)  Acc@
 CUDA_VISIBLE_DEVICES=0,1, torchrun --nproc_per_node=2 --master_port=12345 train_with_script.py maxvit_tiny -c 0,1 -m map_maxvit_tiny_tf_224
 ```
 
-
-
 **Validation Command Line.** Running this command line will result in: **
 
 ```bash
-hankyul@hankyul:~$ CUDA_VISIBLE_DEVICES=0, python validate.py imageNet --model map_maxvit_tiny_tf_224 --checkpoint ../output/result/map_maxvit_tiny_tf_224.pth.tar --crop-pct 0.95
+hankyul@hankyul:~$ CUDA_VISIBLE_DEVICES=0, python validate.py imageNet --model map_maxvit_tiny_tf_224 --pretrained --crop-pct 0.95
 
 Validating in mixed precision with native PyTorch AMP.
 Loaded state_dict from checkpoint '../output/result/map_maxvit_tiny_tf_224.pth.tar'
@@ -479,8 +482,6 @@ Test: [ 190/196]  Time: 0.291s (0.370s,  691.34/s)  Loss:  1.1465 (0.7688)  Acc@
 }
 ```
 
-
-
 </details>
 
 
@@ -496,12 +497,10 @@ Test: [ 190/196]  Time: 0.291s (0.370s,  691.34/s)  Loss:  1.1465 (0.7688)  Acc@
 CUDA_VISIBLE_DEVICES=0,1, torchrun --nproc_per_node=2 --master_port=12345 train_with_script.py faster_vit_3 -c 0,1 -m map_faster_vit_3_224
 ```
 
-
-
 **Validation Command Line.** Running this command line will result in: *Acc@1 84.140 (15.860) Acc@5 96.652 (3.348)*
 
 ```bash
-hankyul@hankyul:~$ CUDA_VISIBLE_DEVICES=0, python validate.py imageNet --model map_faster_vit_3_224 --checkpoint ../output/result/map_faster_vit_3_224.pth.tar --crop-pct 0.95
+hankyul@hankyul:~$ CUDA_VISIBLE_DEVICES=0, python validate.py imageNet --model map_faster_vit_3_224 --pretrained --crop-pct 0.95
 
 Validating in mixed precision with native PyTorch AMP.
 /usr/local/lib/python3.10/dist-packages/torch/functional.py:504: UserWarning: torch.meshgrid: in an upcoming release, it will be required to pass the indexing argument. (Triggered internally at ../aten/src/ATen/native/TensorShape.cpp:3526.)
@@ -511,7 +510,8 @@ Model map_faster_vit_3_224 created, param count: 187338000
 Data processing configuration for current model + dataset:
         input_size: (3, 224, 224)
         interpolation: bicubic
-        mean: (0.485, 0.456, 0.406)                                                                         		std: (0.229, 0.224, 0.225)
+        mean: (0.485, 0.456, 0.406)                                            
+        std: (0.229, 0.224, 0.225)
         crop_pct: 0.95
         crop_mode: center
 Test: [   0/196]  Time: 2.252s (2.252s,  113.66/s)  Loss:  0.5791 (0.5791)  Acc@1:  91.797 ( 91.797)  Acc@5:  98.047 ( 98.047)
@@ -551,14 +551,16 @@ Test: [ 190/196]  Time: 0.291s (0.372s,  689.01/s)  Loss:  1.2158 (0.8989)  Acc@
 
 </details>
 
-
-
 ## 3. How to use MAP?
 
-**Usage.** You can download the code of [map.py](models/map.py) and replace the original (last pooling + FC) layer with the MAP layer. We provide short code snippets to visualize the usage of the proposed MAP in custom networks, which is extracted from [map_mobilenet.py](models/map_mobilenet.py). We set hyper-parameter `num_groups=2` and `num_tokens=4`, which generally works well in diverse networks.
+**Usage.** You can download the code of [map.py](models/map.py) and replace the original (last pooling + FC) layer with
+the MAP layer. We provide short code snippets to visualize the usage of the proposed MAP in custom networks, which is
+extracted from [map_mobilenet.py](models/map_mobilenet.py). We set hyper-parameter `num_groups=2` and `num_tokens=4`,
+which generally works well in diverse networks.
 
 ```python
-!wget - nc https://raw.githubusercontent.com/Lab-LVM/imagenet-models/main/MAP/models/map.py
+!wget - nc
+https: // raw.githubusercontent.com / Lab - LVM / imagenet - models / main / MAP / models / map.py
 
 from map import MAPHead
 
@@ -601,8 +603,9 @@ if __name__ == '__main__':
     print(y.shape)  # [torch.tensor(2, 1000), torch.tensor(2, 1000)]
 ```
 
-
-
 ## 4. Acknowledgement
 
-This project is heavily based on [TIMM](https://github.com/huggingface/pytorch-image-models), [ConvNeXt](https://github.com/facebookresearch/ConvNeXt), [MobileNet](https://github.com/tensorflow/models/blob/master/research/slim/nets/mobilenet_v1.md), [DeiT](https://github.com/facebookresearch/deit), and [PiT](https://github.com/naver-ai/pit). We sincerely appreciate the authors of the mentioned works for sharing such great library as open-source project.
+This project is heavily based
+on [TIMM](https://github.com/huggingface/pytorch-image-models), [ConvNeXt](https://github.com/facebookresearch/ConvNeXt), [MobileNet](https://github.com/tensorflow/models/blob/master/research/slim/nets/mobilenet_v1.md), [DeiT](https://github.com/facebookresearch/deit),
+and [PiT](https://github.com/naver-ai/pit). We sincerely appreciate the authors of the mentioned works for sharing such
+great library as open-source project.
