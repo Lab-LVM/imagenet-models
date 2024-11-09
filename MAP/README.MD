@@ -558,8 +558,8 @@ Test: [ 190/196]  Time: 0.291s (0.372s,  689.01/s)  Loss:  1.2158 (0.8989)  Acc@
 **Usage.** You can download the code of [map.py](models/map.py) and replace the original (last pooling + FC) layer with the MAP layer. We provide short code snippets to visualize the usage of the proposed MAP in custom networks, which is extracted from [map_mobilenet.py](models/map_mobilenet.py). We set hyper-parameter `num_groups=2` and `num_tokens=4`, which generally works well in diverse networks.
 
 ```python
-!wget - nc
-https: // raw.githubusercontent.com / Lab - LVM / imagenet - models / main / MAP / models / map.py
+!wget - nc https://raw.githubusercontent.com/Lab-LVM/imagenet-models/main/MAP/models/map.py
+
 from map import MAPHead
 
 
