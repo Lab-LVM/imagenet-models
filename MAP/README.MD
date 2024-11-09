@@ -1,84 +1,62 @@
 # [MAP] Enriching Local Patterns with Multi-Token Attention for Broad-Sight Neural Networks
 
-This folder contains official pyTorch implementations for *"Enriching Local Patterns with Multi-Token Attention for Broad-Sight Neural Networks"* accepted in WACV'25. (see our [paper]()).
+This folder contains official pyTorch implementations for *"Enriching Local Patterns with Multi-Token Attention for
+Broad-Sight Neural Networks"* accepted in WACV'25. (see our [paper]()).
 
+
+
+<p align="center">
+    <img width="700px" src="img/framework.png"/>
+    <br/>
+  <h4 align="center">Illustration of Multi-Token Attention Pooling Framework</h4>
+</p>
 
 
 ## 1. Requirement
 
-Please install PyTorch (>=1.11.0), TorchVision (0.12.0), and TIMM (0.9.2) library. 
+Please install PyTorch (>=1.11.0), TorchVision (>=0.12.0), and TIMM (==0.9.2) library.
 
-## 2. How to use MAP?
 
-**Usage.** You can download the code of [map.py](models/map.py) and replace the original (last pooling + FC) layer with the MAP layer. We provide short code snippets to visualize the usage of the proposed MAP in custom networks, which is extracted from [map_mobilenet.py](models/map_mobilenet.py). We set hyper-parameter `num_groups=2` and `num_tokens=4`, which generally works well in diverse networks.
+
+## 2. How to use Pre-trained Network with MAP?
+
+**Usage.** You can download the code of [map_convnext.py](models/map_convnext.py), [map_maxvit.py](models/map_maxvit.py), [map_pit.py](models/map_pit.py), [map_resnet.py](models/map_resnet.py), and [map_mobilenet.py](models/map_mobilenet.py). By importing saved python file, you can use pre-trained network to predict images. You can choose model name from `map_mobilenet_v1`, `map_resnet50`, `map_pit_s`, `map_convnext_tiny`, `map_convnext_small`, `map_maxvit_tiny_tf_224`, and `map_faster_vit_3_224`. Here, we provide a simple code snippet to inference tench image using ConvNeXt-T trained with our MAP method.
+
+
 
 ```python
-class MobileNetV1(nn.Module):
-    def __init__(self, ch_in=3, n_classes=1000, num_groups=2, num_tokens=4):
-        # load needed modules...
-        
-        # load our MAP module
-        channels = [64, 128, 256, 512, 1024] # the number channels for 5 stage features maps
-        dim = 192 # the hidden channel for MAP layer.
-        self.fc = MAPHead(
-            # multi-scale
-            multi_scale_level=-1, channels=channels, last_dim=dim,
-            # multi-token
-            n_tokens=num_tokens, n_groups=num_groups, self_distill_token=False,
-            # gram
-            non_linearity=nn.GELU, gram=True, concat_blk=None, gram_blk=nn.Identity,
-            bp_dim=dim, bp_groups=1, gram_group=32, gram_dim=dim,
-            # class attention
-            num_heads=dim // 32, ca_dim=dim, mlp_ratio=1, mlp_groups=1, interactive=True,
-            # FC layer
-            head_fn=nn.Linear, fc_drop=0, num_classes=n_classes,
-        )
-    def forward(self, x):
-        features = []
-		for layer in self.layers:
-            x = layer(x)
-            features.append(x)
-
-		return self.fc(features)
-   
-if __name__ == '__main__':
-    model = MobileNetV1(num_groups=2, num_tokens=4)
-    x = torch.rand(2, 3, 224, 224)
-    y = model(x) 
-    print(y.shape) # [torch.tensor(2, 1000), torch.tensor(2, 1000)]
-```
-
-
-
-## 3. How to use MAP with SOTA Networks?
-
-**Usage.** You can download the code of [map_convnext.py](models/map_convnext.py), [map_maxvit.py](models/map_maxvit.py), [map_pit.py](models/map_pit.py), [map_resnet.py](models/map_resnet.py), and [map_mobilenet.py](models/map_mobilenet.py). By importing downloaded model file, you can use pre-trained backbone network to predict images. You can choose model name from `map_mobilenet_v1`, `map_resnet50`, `map_pit_s`, `map_convnext_tiny`, `map_convnext_small`, `map_maxvit_tiny_tf_224`, and `map_faster_vit_3_224`.
-
-```python
-#!wget https://github.com/Lab-LVM/imagenet-models/blob/main/MAP/models/map_convnext.py
-#!wget https://user-images.githubusercontent.com/31476895/167238573-b0cc3a6d-d3ee-462b-8630-a8f253e69bb2.png
+!wget - nc https://raw.githubusercontent.com/Lab-LVM/imagenet-models/main/MAP/models/map.py
+!wget - nc https://raw.githubusercontent.com/Lab-LVM/imagenet-models/main/MAP/models/map_convnext.py
+!wget - nc https://raw.githubusercontent.com/EliSchwartz/imagenet-sample-images/refs/heads/master/n01440764_tench.JPEG
 
 from map_convnext import *
+from PIL import Image
 from timm import create_model
 from torch import nn
 from torchvision.transforms import Compose, Resize, CenterCrop, Normalize, ToTensor
 
+
 def to_tensor(img):
-    transform_fn = Compose([Resize(256), CenterCrop(224), ToTensor(), Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))])
+    transform_fn = Compose(
+        [Resize(256), CenterCrop(224), ToTensor(), Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))])
     return transform_fn(img)
 
-img = Image.open('167238573-b0cc3a6d-d3ee-462b-8630-a8f253e69bb2.png').convert('RGB')
+
+img = Image.open('n01440764_tench.JPEG').convert('RGB')
 x = to_tensor(img)
 x = x.unsqueeze(0)
 
-model = create_model('map_convnext_tiny', num_classes=1000, pretrained=True) 
-y = model(x).argmax(dim=1)
+model = create_model('map_convnext_tiny', num_classes=1000, pretrained=True)
+model.eval()
+y = model(x)
 
-print(y)
+for branch in range(2):
+    print(y[branch].argmax())
 
 ##########################################
-# output (answer: 196, Sussex_spaniel)
-196
+# output (answer: 0, tench)
+# tensor(0)
+# tensor(0)
 ##########################################
 ```
 
@@ -86,24 +64,24 @@ print(y)
 
 
 
-**Checkpoint.** We provide checkpoints of various backbone network with the proposed MAP layer. 
+**Checkpoint.** We provide checkpoints of various backbone network with the proposed MAP layer.
 
-| Network       | Speed (img/sec) | Param (M) | FLOPs (G) | Top-1 Acc. (%) | Δ    | Link                                      |
-| ------------- | --------------- | --------- | --------- | -------------- | ---- | ----------------------------------------- |
-| MobileNet     | 4066            | 4.2       | 0.6       | 71.3           |      |                                           |
-| +MAP (Ours)   | 3734            | 4.9       | 0.6       | 73.4           | +2.1 | [ckpt](), [code](models/map_mobilenet.py) |
-| ResNet50      | 3334            | 25.6      | 4.1       | 79.8           |      |                                           |
-| +MAP* (Ours)  | 2127            | 42.7      | 5.4       | 82.9           | +3.1 | [ckpt](), [code](models/map_resnet.py)    |
-| PiT-S         | 2580            | 23.5      | 2.4       | 80.9           |      |                                           |
-| +MAP (Ours)   | 2254            | 36.2      | 2.6       | 81.9           | +1.0 | [ckpt](), [code](models/map_pit.py)       |
-| ConvNeXt-T    | 2040            | 29.0      | 4.5       | 82.1           |      |                                           |
-| +MAP (Ours)   | 1665            | 47.8      | 4.9       | 83.3           | +1.2 | [ckpt](), [code](models/map_convnext.py)  |
-| ConvNeXt-S    | 1257            | 50.0      | 8.7       | 83.1           |      |                                           |
-| +MAP (Ours)   | 1111            | 82.8      | 9.2       | 84.1           | +1.0 | [ckpt](), [code](models/map_convnext.py)  |
-| MaxViT-T      | 1009            | 30.9      | 5.4       | 83.6           |      |                                           |
-| +MAP (Ours)   | 907             | 50.0      | 5.8       | 84.3           | +0.7 | [ckpt](), [code](models/map_maxvit.py)    |
-| FasterViT-3** | 1087            | 159.5     | 18.5      | 83.1           |      |                                           |
-| +MAP (Ours)   | 970             | 187.0     | 18.8      | 84.2           | +1.1 | [ckpt](), [code](models/map_fastervit.py) |
+| Network       | Speed (img/sec) | Param (M) | FLOPs (G) | Top-1 Acc. (%) | Δ    | Link                                                                                                                                      |
+|---------------|-----------------|-----------|-----------|----------------|------|-------------------------------------------------------------------------------------------------------------------------------------------|
+| MobileNet     | 4066            | 4.2       | 0.6       | 71.3           |      |                                                                                                                                           |
+| +MAP (Ours)   | 3734            | 4.9       | 0.6       | 73.4           | +2.1 | [ckpt](https://github.com/Lab-LVM/imagenet-models/releases/download/v0.0.1/map_mobilenet_v1.pth.tar), [code](models/map_mobilenet.py)     |
+| ResNet50      | 3334            | 25.6      | 4.1       | 79.8           |      |                                                                                                                                           |
+| +MAP* (Ours)  | 2127            | 42.7      | 5.4       | 82.9           | +3.1 | [ckpt](https://github.com/Lab-LVM/imagenet-models/releases/download/v0.0.1/map_resnet50.pth.tar), [code](models/map_resnet.py)            |
+| PiT-S         | 2580            | 23.5      | 2.4       | 80.9           |      |                                                                                                                                           |
+| +MAP (Ours)   | 2254            | 36.2      | 2.6       | 81.9           | +1.0 | [ckpt](https://github.com/Lab-LVM/imagenet-models/releases/download/v0.0.1/map_pit_s.pth.tar), [code](models/map_pit.py)                  |
+| ConvNeXt-T    | 2040            | 29.0      | 4.5       | 82.1           |      |                                                                                                                                           |
+| +MAP (Ours)   | 1665            | 47.8      | 4.9       | 83.3           | +1.2 | [ckpt](https://github.com/Lab-LVM/imagenet-models/releases/download/v0.0.1/map_convnext_tiny.pth.tar), [code](models/map_convnext.py)     |
+| ConvNeXt-S    | 1257            | 50.0      | 8.7       | 83.1           |      |                                                                                                                                           |
+| +MAP (Ours)   | 1111            | 82.8      | 9.2       | 84.1           | +1.0 | [ckpt](https://github.com/Lab-LVM/imagenet-models/releases/download/v0.0.1/map_convnext_small.pth.tar), [code](models/map_convnext.py)    |
+| MaxViT-T      | 1009            | 30.9      | 5.4       | 83.6           |      |                                                                                                                                           |
+| +MAP (Ours)   | 907             | 50.0      | 5.8       | 84.3           | +0.7 | [ckpt](https://github.com/Lab-LVM/imagenet-models/releases/download/v0.0.1/map_maxvit_tiny_tf_224.pth.tar), [code](models/map_maxvit.py)  |
+| FasterViT-3** | 1087            | 159.5     | 18.5      | 83.1           |      |                                                                                                                                           |
+| +MAP (Ours)   | 970             | 187.0     | 18.8      | 84.2           | +1.1 | [ckpt](https://github.com/Lab-LVM/imagenet-models/releases/download/v0.0.1/map_faster_vit_3_224.pth.tar), [code](models/map_fastervit.py) |
 
 In this table, we evaluate the top-1 accuracy (%) on the ImageNet-1K dataset with 300 epochs. We measure the speed of networks on the RTX 3090 GPU. *: we include SE unit and deep stem in backbone to improve the performance during rebuttal phase. **: we reproduce baseline results without self-distillation method.
 
@@ -176,8 +154,6 @@ Test: [ 190/196]  Time: 0.031s (0.361s,  708.47/s)  Loss:  1.2754 (1.0837)  Acc@
 }
 ```
 
-
-
 </details>
 
 
@@ -244,8 +220,6 @@ Test: [ 190/196]  Time: 0.141s (0.370s,  691.18/s)  Loss:  0.9922 (0.7462)  Acc@
     "interpolation": "bicubic"
 }
 ```
-
-
 
 </details>
 
@@ -315,8 +289,6 @@ Test: [ 190/196]  Time: 0.073s (0.360s,  711.28/s)  Loss:  1.0967 (0.9649)  Acc@
 }
 ```
 
-
-
 </details>
 
 
@@ -373,8 +345,6 @@ Test: [ 190/196]  Time: 0.159s (0.377s,  678.77/s)  Loss:  1.1494 (0.7721)  Acc@
 "interpolation": "bicubic"                                                             
 }
 ```
-
-
 
 </details>
 
@@ -441,8 +411,6 @@ Test: [ 190/196]  Time: 0.232s (0.378s,  677.29/s)  Loss:  1.0264 (0.7365)  Acc@
     "interpolation": "bicubic"
 }
 ```
-
-
 
 </details>
 
@@ -511,7 +479,7 @@ Test: [ 190/196]  Time: 0.291s (0.370s,  691.34/s)  Loss:  1.1465 (0.7688)  Acc@
 }
 ```
 
-​	
+
 
 </details>
 
@@ -581,9 +549,57 @@ Test: [ 190/196]  Time: 0.291s (0.372s,  689.01/s)  Loss:  1.2158 (0.8989)  Acc@
 }
 ```
 
-
-
 </details>
+
+
+
+## 3. How to use MAP?
+
+**Usage.** You can download the code of [map.py](models/map.py) and replace the original (last pooling + FC) layer with the MAP layer. We provide short code snippets to visualize the usage of the proposed MAP in custom networks, which is extracted from [map_mobilenet.py](models/map_mobilenet.py). We set hyper-parameter `num_groups=2` and `num_tokens=4`, which generally works well in diverse networks.
+
+```python
+!wget - nc
+https: // raw.githubusercontent.com / Lab - LVM / imagenet - models / main / MAP / models / map.py
+from map import MAPHead
+
+
+class MobileNetV1(nn.Module):
+    def __init__(self, ch_in=3, n_classes=1000, num_groups=2, num_tokens=4):
+        # load needed modules...
+
+        # load our MAP module
+        channels = [64, 128, 256, 512, 1024]  # the number channels for 5 stage features maps
+        dim = 192  # the hidden channel for MAP layer.
+        self.fc = MAPHead(
+            # multi-scale
+            multi_scale_level=-1, channels=channels, last_dim=dim,
+            # multi-token
+            n_tokens=num_tokens, n_groups=num_groups, self_distill_token=False,
+            # gram
+            non_linearity=nn.GELU, gram=True, concat_blk=None, gram_blk=nn.Identity,
+            bp_dim=dim, bp_groups=1, gram_group=32, gram_dim=dim,
+            # class attention
+            num_heads=dim // 32, ca_dim=dim, mlp_ratio=1, mlp_groups=1, interactive=True,
+            # FC layer
+            head_fn=nn.Linear, fc_drop=0, num_classes=n_classes,
+        )
+
+    def forward(self, x):
+        features = []
+        for layer in self.layers:
+
+    x = layer(x)
+    features.append(x)
+
+    return self.fc(features)
+
+
+if __name__ == '__main__':
+    model = MobileNetV1(num_groups=2, num_tokens=4)
+    x = torch.rand(2, 3, 224, 224)
+    y = model(x)
+    print(y.shape)  # [torch.tensor(2, 1000), torch.tensor(2, 1000)]
+```
 
 
 
