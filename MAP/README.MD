@@ -26,12 +26,9 @@ and `map_faster_vit_3_224`. Here, we provide a simple code snippet to inference 
 with our MAP method.
 
 ```python
-!wget - nc
-https: // raw.githubusercontent.com / Lab - LVM / imagenet - models / main / MAP / models / map.py
-!wget - nc
-https: // raw.githubusercontent.com / Lab - LVM / imagenet - models / main / MAP / models / map_convnext.py
-!wget - nc
-https: // raw.githubusercontent.com / EliSchwartz / imagenet - sample - images / refs / heads / master / n01440764_tench.JPEG
+!wget - nc https://raw.githubusercontent.com/Lab-LVM/imagenet-models/main/MAP/models/map.py
+!wget - nc https://raw.githubusercontent.com/Lab-LVM/imagenet-models/main/MAP/models/map_convnext.py
+!wget - nc https://raw.githubusercontent.com/EliSchwartz/imagenet-sample-images/refs/heads/master/n01440764_tench.JPEG
 
 from map_convnext import *
 from PIL import Image
@@ -94,7 +91,6 @@ Moreover, we denote training time and evaluation results when running each comma
 
 <details>
     <summary>MobileNet-V1</summary>
-
 
 
 **Train Command Line.**
@@ -559,8 +555,7 @@ extracted from [map_mobilenet.py](models/map_mobilenet.py). We set hyper-paramet
 which generally works well in diverse networks.
 
 ```python
-!wget - nc
-https: // raw.githubusercontent.com / Lab - LVM / imagenet - models / main / MAP / models / map.py
+!wget - nc https://raw.githubusercontent.com/Lab-LVM/imagenet-models/main/MAP/models/map.py
 
 from map import MAPHead
 
